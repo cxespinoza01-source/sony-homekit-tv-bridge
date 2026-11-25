@@ -3,6 +3,7 @@ package com.example.sonyhomekittvbridge
 import android.app.Activity
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
@@ -92,8 +93,13 @@ class MainActivity : Activity() {
             val key = pskField.text.toString()
             status.text = "Iniciando HomeKit y anunciando el puente…"
             executor.execute {
-                val result = try { homeKitManager.start(host, key) }
-                catch (error: Exception) { "No se pudo iniciar HomeKit: ${error.localizedMessage ?: error.javaClass.simpleName}" }
+                val result = try {
+                    homeKitManager.start(host, key)
+                } catch (error: Throwable) {
+                    Log.e("SonyHomeKitBridge", "Fallo al iniciar el servidor HomeKit", error)
+                    val detail = error.localizedMessage ?: error.javaClass.name
+                    "Error HomeKit (" + error.javaClass.simpleName + "): " + detail
+                }
                 runOnUiThread { status.text = result }
             }
         }
