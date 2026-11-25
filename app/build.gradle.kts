@@ -9,8 +9,8 @@ android {
         applicationId = "com.example.sonyhomekittvbridge"
         minSdk = 21
         targetSdk = 28
-        versionCode = 3
-        versionName = "0.2.2-alpha"
+        versionCode = 4
+        versionName = "0.2.3-alpha"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
