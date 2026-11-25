@@ -43,7 +43,24 @@ class SonyHomekitTelevision(
     override fun unsubscribeConfiguredName() { nameCallback = null }
 
     override fun setRemoteKey(key: RemoteKeyEnum): CompletableFuture<Void> =
-        CompletableFuture.completedFuture(null)
+        CompletableFuture.runAsync {
+            val sonyKey = when (key) {
+                RemoteKeyEnum.ARROW_UP -> "UP"
+                RemoteKeyEnum.ARROW_DOWN -> "DOWN"
+                RemoteKeyEnum.ARROW_LEFT -> "LEFT"
+                RemoteKeyEnum.ARROW_RIGHT -> "RIGHT"
+                RemoteKeyEnum.SELECT -> "SELECT"
+                RemoteKeyEnum.BACK -> "BACK"
+                RemoteKeyEnum.EXIT -> "EXIT"
+                RemoteKeyEnum.PLAY_PAUSE -> "PLAY"
+                RemoteKeyEnum.REWIND -> "REWIND"
+                RemoteKeyEnum.FAST_FORWARD -> "FAST_FORWARD"
+                RemoteKeyEnum.NEXT_TRACK -> "NEXT"
+                RemoteKeyEnum.PREV_TRACK -> "PREVIOUS"
+                RemoteKeyEnum.INFO -> "INFO"
+            }
+            sony.sendRemoteKey(host, psk, sonyKey)
+        }
 
     override fun getSleepDiscoveryMode(): CompletableFuture<SleepDiscoveryModeEnum> =
         CompletableFuture.completedFuture(SleepDiscoveryModeEnum.ALWAYS_DISCOVERABLE)
