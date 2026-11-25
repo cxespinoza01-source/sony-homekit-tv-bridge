@@ -9,8 +9,8 @@ android {
         applicationId = "com.example.sonyhomekittvbridge"
         minSdk = 21
         targetSdk = 28
-        versionCode = 2
-        versionName = "0.2.1-alpha"
+        versionCode = 3
+        versionName = "0.2.2-alpha"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -30,7 +30,7 @@ android {
 
 dependencies {
     // HAP-Java needs EdDSA classes during HomeKit pairing verification.
-    implementation("net.i2p.crypto:eddsa:0.3.0")
+    implementation("net.i2p.crypto:eddsa:0.1.0")
     implementation("io.github.hap-java:hap:2.0.7") {
         // org.glassfish:javax.json already bundles these API classes.
         exclude(group = "javax.json", module = "javax.json-api")
