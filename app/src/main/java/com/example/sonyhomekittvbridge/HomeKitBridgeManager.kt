@@ -30,9 +30,10 @@ class HomeKitBridgeManager(private val context: Context) {
             acquire()
         }
         try {
-            jmdns = JmDNS.create(address)
+            val dns = JmDNS.create(address)
+            jmdns = dns
             val auth = AndroidHomekitAuthInfo(context.applicationContext)
-            server = HomekitServer(jmdns, 9123)
+            server = HomekitServer(dns, 9123)
             root = server!!.createBridge(
                 auth, "Sony BRAVIA", HomekitAccessoryCategories.TELEVISION,
                 "Sony", "XBR-49X839C", "XBR-49X839C-Bridge", "0.2.0-alpha", "1"
