@@ -83,16 +83,8 @@ class MainActivity : Activity() {
             muted = !muted
             sonyRequest("audio", "setAudioMute", JSONArray().put(JSONObject().put("status", muted)))
         }
-        addAction(content, "Volumen +1") {
-            sonyRequest("audio", "setAudioVolume", JSONArray().put(
-                JSONObject().put("volume", "+1").put("ui", "on").put("target", "speaker")
-            ))
-        }
-        addAction(content, "Volumen -1") {
-            sonyRequest("audio", "setAudioVolume", JSONArray().put(
-                JSONObject().put("volume", "-1").put("ui", "on").put("target", "speaker")
-            ))
-        }
+        addAction(content, "Volumen +1") { changeVolume(1) }
+        addAction(content, "Volumen -1") { changeVolume(-1) }
 
         val note = TextView(this).apply {
             text = "Nota: esta alfa solo prueba comandos Sony por IP. No se puede añadir todavía a Apple Casa. No compartas ni publiques tu PSK."
@@ -116,6 +108,94 @@ class MainActivity : Activity() {
             textSize = 17f
             setOnClickListener { action() }
         }, matchWidth())
+    }
+
+    private fun changeVolume(delta: Int) {
+        val host = ipField.text.toString().trim()
+        val key = pskField.text.toString()
+        if (host.isBlank()) {
+            status.text = "Introduce la IP del televisor."
+            return
+        }
+        status.text = "Consultando volumen…"
+        executor.execute {
+            val result = try {
+                val currentInfo = sonyCall(host, key, "getVolumeInformation", JSONArray())
+                val entries = currentInfo.getJSONArray("result").getJSONArray(0)
+                var speaker: JSONObject? = null
+                for (i in 0 until entries.length()) {
+                    val item = entries.getJSONObject(i)
+                    if (item.optString("target") == "speaker") {
+                        speaker = item
+                        break
+                    }
+                }
+                val info = speaker ?: throw IllegalStateException("El TV no informó el volumen de los altavoces.")
+                val current = info.getInt("volume")
+                val min = info.optInt("minVolume", 0)
+                val max = info.optInt("maxVolume", 100)
+                val next = (current + delta).coerceIn(min, max)
+                if (next == current) {
+                    "Volumen sin cambios: ya está en el límite ($current)."
+                } else {
+                    val params = JSONArray().put(
+                        JSONObject().put("volume", next.toString()).put("target", "speaker")
+                    )
+                    val setResponse = sonyCall(host, key, "setAudioVolume", params)
+                    if (setResponse.has("error")) {
+                        throw IllegalStateException("El TV rechazó el cambio: ${setResponse.optJSONArray("error")}")
+                    }
+                    val verify = sonyCall(host, key, "getVolumeInformation", JSONArray())
+                    val verifiedEntries = verify.getJSONArray("result").getJSONArray(0)
+                    var actual = next
+                    for (i in 0 until verifiedEntries.length()) {
+                        val item = verifiedEntries.getJSONObject(i)
+                        if (item.optString("target") == "speaker") {
+                            actual = item.getInt("volume")
+                            break
+                        }
+                    }
+                    "Volumen solicitado: $next. Volumen informado por el TV: $actual."
+                }
+            } catch (error: Exception) {
+                "No se pudo cambiar el volumen: ${error.localizedMessage ?: error.javaClass.simpleName}"
+            }
+            runOnUiThread { status.text = result }
+        }
+    }
+
+    private fun sonyCall(
+        host: String,
+        key: String,
+        method: String,
+        params: JSONArray
+    ): JSONObject {
+        val connection = (URL("http://$host/sony/audio").openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 5000
+            readTimeout = 6000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+            if (key.isNotBlank()) setRequestProperty("X-Auth-PSK", key)
+        }
+        try {
+            val body = JSONObject()
+                .put("method", method)
+                .put("params", params)
+                .put("id", 1)
+                .put("version", "1.0")
+                .toString()
+            connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            val code = connection.responseCode
+            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+            val response = stream?.bufferedReader()?.use { it.readText() } ?: "(sin cuerpo)"
+            if (code !in 200..299) throw IllegalStateException("HTTP $code: $response")
+            val json = JSONObject(response)
+            if (json.has("error")) throw IllegalStateException("Error Sony: ${json.optJSONArray("error")}")
+            return json
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun sonyRequest(service: String, method: String, params: JSONArray) {
