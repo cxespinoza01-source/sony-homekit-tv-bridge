@@ -23,5 +23,7 @@ dependencies {
     implementation("io.github.hap-java:hap:2.0.7") {
         // org.glassfish:javax.json already bundles these API classes.
         exclude(group = "javax.json", module = "javax.json-api")
+        // HAP-Java PairVerifyManager imports djb.Curve25519 from org.zeromq.
+        exclude(group = "net.vrallev.ecc", module = "ecc-25519-java")
     }
 }
