@@ -22,6 +22,8 @@ android {
         resources {
             // Several libraries include this metadata file; keep one copy in the APK.
             pickFirsts += "META-INF/INDEX.LIST"
+            // Netty modules each ship their own version metadata.
+            pickFirsts += "META-INF/io.netty.versions.properties"
         }
     }
 }
