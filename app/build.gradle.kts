@@ -20,5 +20,8 @@ android {
 }
 
 dependencies {
-    implementation("io.github.hap-java:hap:2.0.7")
+    implementation("io.github.hap-java:hap:2.0.7") {
+        // org.glassfish:javax.json already bundles these API classes.
+        exclude(group = "javax.json", module = "javax.json-api")
+    }
 }
