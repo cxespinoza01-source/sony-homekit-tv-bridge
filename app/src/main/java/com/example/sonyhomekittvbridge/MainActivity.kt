@@ -40,7 +40,7 @@ class MainActivity : Activity() {
         }
 
         val heading = TextView(this).apply {
-            text = "Sony HomeKit TV Bridge\nVersión 0.2.0-alpha"
+            text = "Sony HomeKit TV Bridge\nVersión 0.2.3-alpha"
             textSize = 24f
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 18)
@@ -88,6 +88,18 @@ class MainActivity : Activity() {
         }
         addAction(content, "Volumen +1") { changeVolume(1) }
         addAction(content, "Volumen -1") { changeVolume(-1) }
+        addAction(content, "Control remoto: Inicio") { sendRemoteKey("HOME") }
+        addAction(content, "Control remoto: Atrás") { sendRemoteKey("BACK") }
+        addAction(content, "Control remoto: Arriba") { sendRemoteKey("UP") }
+        addAction(content, "Control remoto: Abajo") { sendRemoteKey("DOWN") }
+        addAction(content, "Control remoto: Izquierda") { sendRemoteKey("LEFT") }
+        addAction(content, "Control remoto: Derecha") { sendRemoteKey("RIGHT") }
+        addAction(content, "Control remoto: OK") { sendRemoteKey("SELECT") }
+        addAction(content, "Canal siguiente") { sendRemoteKey("CHANNEL_UP") }
+        addAction(content, "Canal anterior") { sendRemoteKey("CHANNEL_DOWN") }
+        addAction(content, "Reproducir / Pausar") { sendRemoteKey("PLAY") }
+        addAction(content, "Detener") { sendRemoteKey("STOP") }
+        addAction(content, "Información") { sendRemoteKey("INFO") }
         addAction(content, "Iniciar servidor HomeKit") {
             val host = ipField.text.toString().trim()
             val key = pskField.text.toString()
@@ -130,6 +142,25 @@ class MainActivity : Activity() {
             textSize = 17f
             setOnClickListener { action() }
         }, matchWidth())
+    }
+
+    private fun sendRemoteKey(key: String) {
+        val host = ipField.text.toString().trim()
+        val psk = pskField.text.toString()
+        if (host.isBlank()) {
+            status.text = "Introduce la IP del televisor."
+            return
+        }
+        status.text = "Enviando comando $key…"
+        executor.execute {
+            val result = try {
+                SonyControl().sendRemoteKey(host, psk, key)
+                "Comando enviado: $key"
+            } catch (error: Exception) {
+                "No se pudo enviar $key: ${error.localizedMessage ?: error.javaClass.simpleName}"
+            }
+            runOnUiThread { status.text = result }
+        }
     }
 
     private fun changeVolume(delta: Int) {
