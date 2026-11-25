@@ -17,6 +17,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
+    packaging {
+        resources {
+            // Several libraries include this metadata file; keep one copy in the APK.
+            pickFirsts += "META-INF/INDEX.LIST"
+        }
+    }
 }
 
 dependencies {
