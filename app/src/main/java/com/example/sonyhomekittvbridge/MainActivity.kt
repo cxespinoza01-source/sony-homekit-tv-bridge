@@ -39,7 +39,7 @@ class MainActivity : Activity() {
         }
 
         val heading = TextView(this).apply {
-            text = "Sony HomeKit TV Bridge\nVersión 0.1.0-alpha"
+            text = "Sony HomeKit TV Bridge\nVersión 0.2.0-alpha"
             textSize = 24f
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 18)
@@ -47,7 +47,7 @@ class MainActivity : Activity() {
         content.addView(heading)
 
         status = TextView(this).apply {
-            text = "Prueba de control local Sony.\nHomeKit/HAP aún no está implementado."
+            text = "Control local Sony y puente HomeKit para Apple Casa."
             textSize = 16f
             setPadding(0, 8, 0, 18)
         }
