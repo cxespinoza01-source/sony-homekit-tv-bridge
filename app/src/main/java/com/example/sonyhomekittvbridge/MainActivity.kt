@@ -22,9 +22,11 @@ class MainActivity : Activity() {
     private lateinit var pskField: EditText
     private lateinit var status: TextView
     private var muted = false
+    private lateinit var homeKitManager: HomeKitBridgeManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        homeKitManager = HomeKitBridgeManager(applicationContext)
 
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -85,9 +87,23 @@ class MainActivity : Activity() {
         }
         addAction(content, "Volumen +1") { changeVolume(1) }
         addAction(content, "Volumen -1") { changeVolume(-1) }
+        addAction(content, "Iniciar servidor HomeKit") {
+            val host = ipField.text.toString().trim()
+            val key = pskField.text.toString()
+            status.text = "Iniciando HomeKit y anunciando el puente…"
+            executor.execute {
+                val result = try { homeKitManager.start(host, key) }
+                catch (error: Exception) { "No se pudo iniciar HomeKit: ${error.localizedMessage ?: error.javaClass.simpleName}" }
+                runOnUiThread { status.text = result }
+            }
+        }
+        addAction(content, "Detener servidor HomeKit") {
+            homeKitManager.stop()
+            status.text = "Servidor HomeKit detenido."
+        }
 
         val note = TextView(this).apply {
-            text = "Nota: esta alfa solo prueba comandos Sony por IP. No se puede añadir todavía a Apple Casa. No compartas ni publiques tu PSK."
+            text = "Para añadirlo: inicia el servidor HomeKit, abre Casa en tu iPhone, toca + > Añadir accesorio > Más opciones y selecciona Sony BRAVIA. Introduce el código que aparece aquí. Mantén esta app abierta y el TV encendido. No compartas ni publiques tu PSK ni el código de emparejamiento."
             textSize = 14f
             setPadding(0, 18, 0, 8)
         }
@@ -237,6 +253,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        homeKitManager.stop()
         executor.shutdownNow()
         super.onDestroy()
     }
